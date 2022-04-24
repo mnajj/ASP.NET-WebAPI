@@ -2,9 +2,9 @@
 
 namespace WebAPI.Repositories
 {
-	public class ItemsRepo
+	public class ItemsRepo : IItemsRepo
 	{
-		private readonly List<Item> Items = new()
+		private readonly List<Item> items = new()
 		{
 			new Item
 			{
@@ -29,8 +29,22 @@ namespace WebAPI.Repositories
 			},
 		};
 
-		public IEnumerable<Item> GetItems() => Items;
+		public IEnumerable<Item> GetItems() => items;
 
-		public Item GetItem(Guid id) => Items.Where(i => i.Id == id).SingleOrDefault();
+		public Item GetItem(Guid id) => items.Where(i => i.Id == id).SingleOrDefault();
+
+		public void CreateItem(Item item) => items.Add(item);
+
+		public void UpdateItem(Item item)
+		{
+			var index = items.FindIndex(i => i.Id == item.Id);
+			items[index] = item;
+		}
+
+		public void DeleteItem(Guid id)
+		{
+			var index = items.FindIndex(i => i.Id == id);
+			items.RemoveAt(index);
+		}
 	}
 }
