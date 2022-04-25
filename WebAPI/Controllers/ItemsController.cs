@@ -17,15 +17,15 @@ namespace WebAPI.Controllers
 		}
 
 		[HttpGet]
-		public IEnumerable<ItemDto> GetItems()
+		public async Task<IEnumerable<ItemDto>> GetItemsAsync()
 		{
-			return repo.GetItems().Select(i => i.AsDto());
+			return (await repo.GetItemsAsync()).Select(i => i.AsDto());
 		}
 
 		[HttpGet("{id}")]
-		public ActionResult<ItemDto> GetItem(Guid id)
+		public async Task<ActionResult<ItemDto>> GetItemAsync(Guid id)
 		{
-			var item = repo.GetItem(id);
+			var item = await repo.GetItemAsync(id);
 			if(item == null)
 			{
 				return NotFound();
@@ -34,7 +34,7 @@ namespace WebAPI.Controllers
 		}
 
 		[HttpPost]
-		public ActionResult<ItemDto> CreateItem(CreateItemDto itemDto)
+		public async Task<ActionResult<ItemDto>> CreateItemAsync(CreateItemDto itemDto)
 		{
 			Item item = new Item()
 			{
@@ -43,14 +43,14 @@ namespace WebAPI.Controllers
 				Price = itemDto.Price,
 				CreatedDate = DateTimeOffset.UtcNow
 			};
-			repo.CreateItem(item);
-			return CreatedAtAction(nameof(GetItem), new {id = item.Id}, item.AsDto());
+			await repo.CreateItemAsync(item);
+			return CreatedAtAction(nameof(GetItemAsync), new {id = item.Id}, item.AsDto());
 		}
 
 		[HttpPut("{id}")]
-		public ActionResult UpdateItem(Guid id, UpdateItemDto itemDto)
+		public async Task<ActionResult> UpdateItemAsync(Guid id, UpdateItemDto itemDto)
 		{
-			var existingItem = repo.GetItem(id);
+			var existingItem = await repo.GetItemAsync(id);
 			if (existingItem == null)
 			{
 				return NotFound();
@@ -60,19 +60,19 @@ namespace WebAPI.Controllers
 				Name = itemDto.Name,
 				Price = itemDto.Price
 			};
-			repo.UpdateItem(updatedItem);
+			await repo.UpdateItemAsync(updatedItem);
 			return NoContent();
 		}
 
 		[HttpDelete("{id}")]
-		public ActionResult DeleteItem(Guid id)
+		public async Task<ActionResult> DeleteItemAsync(Guid id)
 		{
-			var existingItem = repo.GetItem(id);
+			var existingItem = await repo.GetItemAsync(id);
 			if (existingItem == null)
 			{
 				return NotFound();
 			}
-			repo.DeleteItem(id);
+			await repo.DeleteItemAsync(id);
 			return NoContent();
 		}
 	}
