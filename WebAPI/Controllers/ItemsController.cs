@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebAPI.DTOs;
 using WebAPI.Model;
 using WebAPI.Repositories;
+using static WebAPI.Dtos;
 
 namespace WebAPI.Controllers
 {
@@ -10,23 +10,31 @@ namespace WebAPI.Controllers
 	public class ItemsController : Controller
 	{
 		private readonly IItemsRepo repo;
+		private readonly ILogger<ItemsController> _logger;
 
-		public ItemsController(IItemsRepo repo)
+		public ItemsController(IItemsRepo repo, ILogger<ItemsController> logger)
 		{
-			this.repo = repo; 
+			this.repo = repo;
+			this._logger = logger;
 		}
 
 		[HttpGet]
-		public async Task<IEnumerable<ItemDto>> GetItemsAsync()
+		public async Task<IEnumerable<ItemDto>> GetItemsAsync(string nameToMatch = null)
 		{
-			return (await repo.GetItemsAsync()).Select(i => i.AsDto());
+			var items = (await repo.GetItemsAsync()).Select(i => i.AsDto());
+			if (!String.IsNullOrWhiteSpace(nameToMatch))
+			{
+				items = items.Where(i => i.Name.Contains(
+					nameToMatch, StringComparison.OrdinalIgnoreCase));
+			}
+			return items;
 		}
 
 		[HttpGet("{id}")]
 		public async Task<ActionResult<ItemDto>> GetItemAsync(Guid id)
 		{
 			var item = await repo.GetItemAsync(id);
-			if(item == null)
+			if (item == null)
 			{
 				return NotFound();
 			}
@@ -40,11 +48,12 @@ namespace WebAPI.Controllers
 			{
 				Id = new Guid(),
 				Name = itemDto.Name,
+				Description = itemDto.Description,
 				Price = itemDto.Price,
 				CreatedDate = DateTimeOffset.UtcNow
 			};
 			await repo.CreateItemAsync(item);
-			return CreatedAtAction(nameof(GetItemAsync), new {id = item.Id}, item.AsDto());
+			return CreatedAtAction(nameof(GetItemAsync), new { id = item.Id }, item.AsDto());
 		}
 
 		[HttpPut("{id}")]
@@ -55,12 +64,9 @@ namespace WebAPI.Controllers
 			{
 				return NotFound();
 			}
-			Item updatedItem = existingItem with
-			{
-				Name = itemDto.Name,
-				Price = itemDto.Price
-			};
-			await repo.UpdateItemAsync(updatedItem);
+			existingItem.Name = itemDto.Name;
+			existingItem.Price = itemDto.Price;
+			await repo.UpdateItemAsync(existingItem);
 			return NoContent();
 		}
 
